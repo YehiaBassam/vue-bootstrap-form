@@ -4,32 +4,64 @@
             <div v-for="(question, index) in questions" :key="question.id" class="mb-4 border p-5">
                 <b-row>
                     <div class="col-md-6">
-                        <b-form-group class="text-start" :id="`input-group-${index}`" label="Email address:" :label-for="`input-${index}`"
-                            description="We'll never share your email with anyone else.">
+                        <b-form-group class="text-start" :id="`input-group-${index}`" label="Email address:"
+                            :label-for="`input-${index}`" description="We'll never share your email with anyone else.">
                             <b-form-input :id="`input-${index}`" v-model="question.form.email" type="email"
-                                placeholder="Enter email" ></b-form-input>
+                                placeholder="Enter email"></b-form-input>
+                            <template v-if="$v.questions.$each[index].form.email.$error">
+                                <div v-if="!$v.questions.$each[index].form.email.required" class="mt-2 text-danger">
+                                    email is required *
+                                </div>
+                                <div v-else-if="!$v.questions.$each[index].form.email.email" class="mt-2 text-danger">
+                                    email is invalid *
+                                </div>
+                            </template>
                         </b-form-group>
                     </div>
                     <b-col md="6">
-
-                        <b-form-group class="text-start" :id="`input-group-${index}`" label="Your Name:" :label-for="`input-${index}`">
-                            <b-form-input :id="`input-${index}`" v-model="question.form.name" placeholder="Enter name"
-                                />
-                            <span
-                                v-if="
-                                    $v.questions.$each[index].form.name.$error ||
-                                    !$v.questions.$each[index].form.name.required
-                                "
-                                class="mt-2 text-danger"
-                            >
-                            Error *
-                                </span>
+                        <b-form-group class="text-start" :id="`input-group-${index}`" label="Your Name:"
+                            :label-for="`input-${index}`">
+                            <b-form-input :id="`input-${index}`" v-model="question.form.name" placeholder="Enter name" />
+                            <span v-if="$v.questions.$each[index].form.name.$error &&
+                                !$v.questions.$each[index].form.name.required
+                                " class="mt-2 text-danger">
+                                name is required *
+                            </span>
                         </b-form-group>
                     </b-col>
 
+                    <b-form-group class="text-start" :id="`input-group-${index}`" label="Your numbers:"
+                        :label-for="`input-${index}`">
+                        <b-form-input :id="`input-${index}`" v-model="question.form.numbers" placeholder="Enter numbers" />
+
+                        <template v-if="$v.questions.$each[index].form.numbers.$error">
+                            <div v-if="!$v.questions.$each[index].form.numbers.required" class="mt-2 text-danger">
+                                numbers is required *
+                            </div>
+                            <div v-else-if="!$v.questions.$each[index].form.numbers.numbers" class="mt-2 text-danger">
+                                must be numbers only *
+                            </div>
+                        </template>
+                    </b-form-group>
+
+                    <b-form-group class="my-4">
+                        <b-form-textarea :id="`textarea-${index}`" v-model="question.form.text"
+                            placeholder="Enter something..." rows="3" max-rows="6"></b-form-textarea>
+                        <span v-if="$v.questions.$each[index].form.text.$error &&
+                            !$v.questions.$each[index].form.text.required
+                            " class="mt-2 text-danger">
+                            text is required *
+                        </span>
+                    </b-form-group>
+
                     <b-form-group :id="`input-group-${index}`" label="Food:" :label-for="`input-${index}`">
-                        <b-form-select :id="`input-${index}`" v-model="question.form.food" :options="foods"
-                            ></b-form-select>
+                        <b-form-select :id="`input-${index}`" v-model="question.form.food" :options="foods"></b-form-select>
+
+                        <span v-if="$v.questions.$each[index].form.food.$error &&
+                            !$v.questions.$each[index].form.food.required
+                            " class="mt-2 text-danger">
+                            food is required *
+                        </span>
                     </b-form-group>
 
                     <b-form-group class="my-4" :id="`input-group-${index}`" v-slot="{ ariaDescribedby }">
@@ -40,15 +72,16 @@
                         </b-form-checkbox-group>
 
                         <b-form-group v-if="question.form.checked.includes('me')" :id="`input-group-${index}`"
-                            label="Your Name:" :label-for="`input-${index}`">
-                            <b-form-input :id="`input-${index}`" v-model="question.form.newName" placeholder="Enter name"
-                                ></b-form-input>
+                            label="Your New Name:" :label-for="`input-${index}`" class="mt-3">
+                            <b-form-input :id="`input-${index}`" v-model="question.form.newName"
+                                placeholder="Enter name"></b-form-input>
+                            <span v-if="$v.questions.$each[index].form.newName.$error &&
+                                !$v.questions.$each[index].form.newName.required
+                                " class="mt-2 text-danger">
+                                newName is required *
+                            </span>
                         </b-form-group>
                     </b-form-group>
-
-                    <b-card class="mt-3" header="Form Data Result">
-                        <pre class="m-0">{{ question.form }}</pre>
-                    </b-card>
                 </b-row>
 
                 <div class="text-start">
@@ -56,7 +89,7 @@
                 </div>
             </div>
             <div class="mb-3">
-                <b-button class="mt-4 me-5" variant="success" @click="addForm">Add +</b-button>
+                <b-button class="my-4" variant="success" @click="addForm">Add +</b-button>
             </div>
             <div class="mb-3">
                 <b-button type="submit" variant="primary" class="me-5">Submit</b-button>
@@ -68,21 +101,50 @@
 </template>
 
 <script>
-import { required, minLength, between } from 'vuelidate/lib/validators'
+// vuelidate on :
+// text - textarea - select
+// requiredIf - Custom Validation 
+// Form Builder
+
+import { required, minLength, email, requiredIf, helpers } from 'vuelidate/lib/validators';
+
+const numbersOnly = helpers.regex(
+    "numbersOnly",
+    /^[0-9]*$/
+);
 
 export default {
     validations: {
         questions: {
             $each: {
-                form:{
-                    name : {
+                form: {
+                    name: {
                         required,
                         minLength: minLength(1),
-                        between: between(2, 30),
+                        // between: between(2, 30),
+                    },
+                    email: {
+                        required,
+                        email
+                    },
+                    text: {
+                        required,
+                    },
+                    food: {
+                        required,
+                    },
+                    numbers: {
+                        required,
+                        numbersOnly
+                    },
+                    newName: {
+                        required: requiredIf(function (data) { // data means all data in $each
+                            return data.checked.includes('me');
+                        })
                     }
                 }
             }
-        }
+        },
     },
     data() {
         return {
@@ -92,6 +154,8 @@ export default {
                         email: '',
                         name: '',
                         newName: '',
+                        text: '',
+                        numbers: 0,
                         food: null,
                         checked: []
                     },
@@ -108,6 +172,8 @@ export default {
                     form: {
                         email: '',
                         name: '',
+                        text: '',
+                        numbers: 0,
                         food: null,
                         checked: []
                     },
@@ -119,21 +185,22 @@ export default {
         },
         onSubmit() {
             this.$v.$touch();
-            console.log(this.questions);
-            // alert(JSON.stringify(this.form))
-        },
-        onReset(event) {
-            event.preventDefault()
 
-            for (const q of this.questions) {
-                console.log(q)
+            if (this.$v.$invalid) {
+                console.log('error')
+                return
             }
-            // Reset our form values
-            // this.form.email = ''
-            // this.form.name = ''
-            // this.form.food = null
-            // this.form.checked = []
-            // Trick to reset/clear native browser form validation state
+            console.log('success', this.questions);
+        },
+        onReset() {
+            for (const q of this.questions) {
+                q.form.email = "";
+                q.form.name = "";
+                q.form.text = "";
+                q.form.food = null;
+                q.form.numbers = 0;
+                q.form.checked = [];
+            }
             this.show = false
             this.$nextTick(() => {
                 this.show = true
