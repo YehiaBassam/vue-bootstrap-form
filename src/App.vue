@@ -1,21 +1,18 @@
 <template>
   <div id="app">
     <b-container>
-      <!-- <formValidation /> -->
-      <formValidation2 />
+      <formValidation />
     </b-container>
   </div>
 </template>
 
 <script>
-// import formValidation from '@/components/formValidation.vue';
-import formValidation2 from '@/components/formValidation2.vue';
+import formValidation from '@/components/formValidation.vue';
 
 export default {
   name: 'App',
   components: {
-    formValidation2,
-    // formValidation,
+    formValidation,
   }
 }
 </script>
